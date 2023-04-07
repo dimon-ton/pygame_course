@@ -13,6 +13,11 @@ HEIGHT = 700
 # set the color RGB
 BLACK = (0,0,0)
 GREEN = (0, 255, 0)
+WHITE = (255, 255, 255)
+
+# score when the enemy is collided
+SCORE = 0
+LIVES = 3
 
 
 # set the resolution of game
@@ -20,6 +25,14 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 # set caption to game
 pygame.display.set_caption('My First Game by Pimon')
+
+
+
+# set background
+bg = 'background.png'
+background = pygame.image.load(bg).convert_alpha()
+background_rect = background.get_rect()
+
 
 # manage about time in game
 clock = pygame.time.Clock()
@@ -30,18 +43,21 @@ class Enemy(pygame.sprite.Sprite):
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        img = 'First_game/aircraft.png'
+        img = 'aircraft.png'
         self.image = pygame.image.load(img).convert_alpha()
+        
         
         
         # self.image = pygame.Surface((50, 50))
         # self.image.fill(GREEN)
 
-       
+        # scale the sprite
+        scaled_impage = pygame.transform.scale(self.image, (90,90))
+        self.image = scaled_impage
 
         # create rectangle
         self.rect = self.image.get_rect()
-
+        
         # random x axis
         rand_x = random.randint(self.rect.width, WIDTH - self.rect.width)
 
@@ -66,7 +82,7 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        img = 'First_game/bomber.png'
+        img = 'bomber.png'
         self.image = pygame.image.load(img).convert_alpha()
         
         
@@ -85,6 +101,7 @@ class Player(pygame.sprite.Sprite):
     def shoot(self):
         bullet = Bullet(self.rect.centerx, self.rect.top)
         all_sprites.add(bullet)
+        group_bullets.add(bullet)
 
 
     def update(self):
@@ -135,8 +152,26 @@ class Bullet(pygame.sprite.Sprite):
 
 
 
+
+
+font_name = pygame.font.match_font('tahoma')
+
+def draw_text(screen, text, size, x, y):
+    font = pygame.font.Font(font_name, size)
+    text_surface = font.render(text, True, WHITE)
+    text_rect = text_surface.get_rect()
+    text_rect.topleft = (x, y)
+    screen.blit(text_surface, text_rect)
+
+
+
+
 # create group of sprites
-all_sprites = pygame.sprite.Group()
+all_sprites = pygame.sprite.Group() # box for collecting all sprites
+group_enemies = pygame.sprite.Group() # box for collecting enemies
+group_bullets = pygame.sprite.Group() # box for collecting bullets
+
+
 player = Player()
 all_sprites.add(player)
 
@@ -144,6 +179,7 @@ all_sprites.add(player)
 for i in range(3):
     enemy = Enemy()
     all_sprites.add(enemy)
+    group_enemies.add(enemy)
 
 # the status of game
 running = True
@@ -162,9 +198,38 @@ while running:
                 player.shoot()
 
     all_sprites.update()
+
+    # check if the player is collided
+    collide_list = pygame.sprite.spritecollide(player, group_enemies, True)
+
     
+    if LIVES != 0 and collide_list:
+        player.kill()
+        LIVES -= 1
+        player = Player()
+        all_sprites.add(player)
+    elif LIVES == 0:
+        running = False
+
+
+    # bullet collide
+    bullet_collide_list = pygame.sprite.groupcollide(group_bullets, group_enemies, True, True)
+
+    for b in bullet_collide_list:
+        enemy = Enemy()
+        all_sprites.add(enemy)
+        group_enemies.add(enemy)
+        # add score
+        SCORE += 10
+
+
     # inset background color
     screen.fill(BLACK)
+
+    screen.blit(background, background_rect)
+
+    draw_text(screen, "SCORE: {}".format(SCORE), 30, WIDTH-180, 10)
+    draw_text(screen, "LIVE: {}".format(LIVES), 30, 30, 10)
 
     # draw the sprites
     all_sprites.draw(screen)
