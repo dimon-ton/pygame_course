@@ -1,5 +1,9 @@
 import pygame
 import random
+import os
+
+full_path = os.path.realpath(__file__)
+PATH = os.path.dirname(full_path)
 
 # start pygame
 pygame.init()
@@ -29,7 +33,7 @@ pygame.display.set_caption('My First Game by Pimon')
 
 
 # set background
-bg = 'background.png'
+bg = os.path.join(PATH, 'background.png')
 background = pygame.image.load(bg).convert_alpha()
 background_rect = background.get_rect()
 
@@ -43,7 +47,7 @@ class Enemy(pygame.sprite.Sprite):
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        img = 'aircraft.png'
+        img = os.path.join(PATH, 'aircraft.png')
         self.image = pygame.image.load(img).convert_alpha()
         
         
@@ -82,7 +86,7 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        img = 'bomber.png'
+        img = os.path.join(PATH, 'bomber.png')
         self.image = pygame.image.load(img).convert_alpha()
         
         
@@ -150,7 +154,67 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.y < 0:
             self.kill()
 
+# medical pack
 
+'''
+
+ - กระเป๋าจะตกทุก 30 วินาที
+ - เมื่อเราชนกระเป๋า จะได้ชีวิตเพิ่มอีก 1
+ - กระเป๋าจะหายไปเมื่อชน
+ - มีเสียงติ๊งเมื่อได้รับกระเป๋า
+ - เมื่อกระเป๋าลงไปด้านล่างสุดให้รออีก 30 วินาทีกว่ามันจะออกมา
+
+'''
+
+
+class Medipack(pygame.sprite.Sprite):
+
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        img = os.path.join(PATH, 'medipack.png')
+
+        # main clock
+        self.last = pygame.time.get_ticks()
+        self.wait = 20_000
+        self.run = True
+
+
+        self.image = pygame.image.load(img).convert_alpha()
+        
+        scaled_impage = pygame.transform.scale(self.image, (90,90))
+        self.image = scaled_impage
+
+        self.rect = self.image.get_rect()
+
+        rand_x = random.randint(self.rect.width, WIDTH - self.rect.width)
+        self.rect.center = (rand_x, 0)
+
+        self.speed_y = random.randint(2, 5)
+
+    def update(self):
+        now = pygame.time.get_ticks()
+
+        if self.run == True:
+            self.rect.y += self.speed_y
+
+        if self.rect.bottom > HEIGHT:
+            # เมื่อกระเป๋าพยาบาลหล่นลงไปตรงขอบจอ จะสั่งให้มันหยุดวิ่ง
+            self.run = False
+
+            self.rect.y = -100
+            rand_x = random.randint(self.rect.width, WIDTH - self.rect.width)
+            self.rect.x = rand_x
+            self.speed_y = random.randint(2, 5)
+
+
+
+# special bullet
+
+'''
+- เมื่อได้รับกระสุนชนิดพิเศษแล้ว จะเป็นกระสุนที่ออกมาเป็นแนวนอน
+- ยิงเป็นเส้นตรงยาวเหมือนเลเซอร์
+- ยิงนัดเดียวได้เครื่องบินหลายตัว
+'''
 
 
 
@@ -170,7 +234,7 @@ def draw_text(screen, text, size, x, y):
 all_sprites = pygame.sprite.Group() # box for collecting all sprites
 group_enemies = pygame.sprite.Group() # box for collecting enemies
 group_bullets = pygame.sprite.Group() # box for collecting bullets
-
+group_medipack = pygame.sprite.Group()
 
 player = Player()
 all_sprites.add(player)
@@ -180,6 +244,13 @@ for i in range(3):
     enemy = Enemy()
     all_sprites.add(enemy)
     group_enemies.add(enemy)
+    
+
+# add medipack
+medipack = Medipack()
+all_sprites.add(medipack)
+group_medipack.add(medipack)
+
 
 # the status of game
 running = True
