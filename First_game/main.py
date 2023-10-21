@@ -8,6 +8,24 @@ PATH = os.path.dirname(full_path)
 # start pygame
 pygame.init()
 
+# start sound
+pygame.mixer.init()
+
+
+
+
+####################### sound effect ################################
+# background music
+pygame.mixer.music.load(os.path.join(PATH, "background-music.mp3"))
+pygame.mixer.music.play(loops=-1) # -1 = loop
+
+# collide sound
+explosion = pygame.mixer.Sound(os.path.join(PATH, "explosion.wav"))
+
+laser = pygame.mixer.Sound(os.path.join(PATH, "laser.wav"))
+powerup = pygame.mixer.Sound(os.path.join(PATH, "powerup.wav"))
+over_sound = pygame.mixer.Sound(os.path.join(PATH, "gameover.wav"))
+
 # FPS --> Frame per second
 FPS = 30
 
@@ -22,6 +40,12 @@ WHITE = (255, 255, 255)
 # score when the enemy is collided
 SCORE = 0
 LIVES = 3
+GAMEOVER = False
+GAMEOVER_FONT = True
+GAMEOVER_TIME = pygame.time.get_ticks()
+SOUND_STATE = True
+
+
 
 
 # set the resolution of game
@@ -103,6 +127,7 @@ class Player(pygame.sprite.Sprite):
         self.speed_x = 0
 
     def shoot(self):
+        pygame.mixer.Sound.play(laser)
         bullet = Bullet(self.rect.centerx, self.rect.top)
         all_sprites.add(bullet)
         group_bullets.add(bullet)
@@ -114,17 +139,22 @@ class Player(pygame.sprite.Sprite):
         self.speed_x = 0
         # check if the key is pressed.
         keystate = pygame.key.get_pressed()
-        if keystate[pygame.K_LEFT]:
-            self.speed_x = -5
 
-        if keystate[pygame.K_RIGHT]:
-            self.speed_x = 5
+        if not GAMEOVER:
+            if keystate[pygame.K_LEFT] and self.rect.x > 0:
+                self.speed_x = -5
+
+            if keystate[pygame.K_RIGHT] and self.rect.x < WIDTH - self.rect.width:
+                self.speed_x = 5
 
         self.rect.x += self.speed_x
 
 
         if self.rect.bottom > HEIGHT:
             self.rect.y = 0
+
+
+        
 
 class Bullet(pygame.sprite.Sprite):
 
@@ -156,18 +186,20 @@ class Bullet(pygame.sprite.Sprite):
 
 # medical pack
 
-'''
-
- - กระเป๋าจะตกทุก 30 วินาที
- - เมื่อเราชนกระเป๋า จะได้ชีวิตเพิ่มอีก 1
- - กระเป๋าจะหายไปเมื่อชน
- - มีเสียงติ๊งเมื่อได้รับกระเป๋า
- - เมื่อกระเป๋าลงไปด้านล่างสุดให้รออีก 30 วินาทีกว่ามันจะออกมา
-
-'''
-
-
 class Medipack(pygame.sprite.Sprite):
+
+
+
+    '''
+
+    - กระเป๋าจะตกทุก 30 วินาที
+    - เมื่อเราชนกระเป๋า จะได้ชีวิตเพิ่มอีก 1
+    - กระเป๋าจะหายไปเมื่อชน
+    - มีเสียงติ๊งเมื่อได้รับกระเป๋า
+    - เมื่อกระเป๋าลงไปด้านล่างสุดให้รออีก 30 วินาทีกว่ามันจะออกมา
+
+    '''
+
 
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -176,7 +208,7 @@ class Medipack(pygame.sprite.Sprite):
         # main clock
         self.last = pygame.time.get_ticks()
         self.wait = 20_000
-        self.run = True
+        self.run = False
 
 
         self.image = pygame.image.load(img).convert_alpha()
@@ -187,12 +219,14 @@ class Medipack(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
 
         rand_x = random.randint(self.rect.width, WIDTH - self.rect.width)
-        self.rect.center = (rand_x, 0)
+        self.rect.center = (rand_x, -100)
 
         self.speed_y = random.randint(2, 5)
 
     def update(self):
         now = pygame.time.get_ticks()
+
+        
 
         if self.run == True:
             self.rect.y += self.speed_y
@@ -200,12 +234,18 @@ class Medipack(pygame.sprite.Sprite):
         if self.rect.bottom > HEIGHT:
             # เมื่อกระเป๋าพยาบาลหล่นลงไปตรงขอบจอ จะสั่งให้มันหยุดวิ่ง
             self.run = False
-
             self.rect.y = -100
+
+
+
+
+        if (now - self.last) >= self.wait:
+            self.run = True
+            self.last = now
+
             rand_x = random.randint(self.rect.width, WIDTH - self.rect.width)
             self.rect.x = rand_x
             self.speed_y = random.randint(2, 5)
-
 
 
 # special bullet
@@ -274,19 +314,55 @@ while running:
     collide_list = pygame.sprite.spritecollide(player, group_enemies, True)
 
     
-    if LIVES != 0 and collide_list:
-        player.kill()
+    # if LIVES != 0 and collide_list:
+    #     player.kill()
+    #     LIVES -= 1
+    #     player = Player()
+    #     all_sprites.add(player)
+    # elif LIVES == 0:
+    #     running = False
+
+
+    if collide_list:
+
+        pygame.mixer.Sound.play(explosion)
+
+        enemy = Enemy()
+        all_sprites.add(enemy)
+        group_enemies.add(enemy)
+
+
+        # if collided minus one score
         LIVES -= 1
-        player = Player()
-        all_sprites.add(player)
-    elif LIVES == 0:
-        running = False
+
+        if LIVES == 0:
+            GAMEOVER = True
+
+
+    collide_medi = pygame.sprite.spritecollide(player, group_medipack, True)
+
+
+    # plus lives if the medicine box is collided
+    if collide_medi:
+
+        pygame.mixer.Sound.play(powerup)
+
+        LIVES += 1
+
+        medipack = Medipack()
+        all_sprites.add(medipack)
+        group_medipack.add(medipack)
+
+
+
+
 
 
     # bullet collide
     bullet_collide_list = pygame.sprite.groupcollide(group_bullets, group_enemies, True, True)
 
     for b in bullet_collide_list:
+
         enemy = Enemy()
         all_sprites.add(enemy)
         group_enemies.add(enemy)
@@ -301,6 +377,44 @@ while running:
 
     draw_text(screen, "SCORE: {}".format(SCORE), 30, WIDTH-180, 10)
     draw_text(screen, "LIVE: {}".format(LIVES), 30, 30, 10)
+
+
+    # เมื่อ Game OVer อยากใส่อะไรเข้าไปใส่ได้เลย
+    if GAMEOVER:
+        if SOUND_STATE:
+            pygame.mixer.Sound.play(over_sound)
+            SOUND_STATE = False
+
+        now_gameover = pygame.time.get_ticks()
+        if GAMEOVER_FONT:
+            draw_text(screen, 'GAME OVER', 100, 150, 300)
+            if now_gameover - GAMEOVER_TIME >= 1_000:
+                GAMEOVER_FONT = False
+                GAMEOVER_TIME = now_gameover
+        else:
+            draw_text(screen, 'GAME OVER', 50, 280, 250)
+            if now_gameover - GAMEOVER_TIME >= 1_000:
+                GAMEOVER_FONT = True
+                GAMEOVER_TIME = now_gameover
+
+        # ทำให้เครื่องบินศัตรูและกระสุนหายไป หลังจาก Game Over
+        
+        for type in [group_enemies, group_medipack, group_bullets]:
+            for charecter in type:
+                charecter.kill()
+
+        # for enemy in group_enemies:
+        #     enemy.kill()
+
+        # for medic in group_medipack:
+        #     medic.kill()
+            
+        # for bull in group_bullets:
+        #     bull.kill()
+
+        
+
+
 
     # draw the sprites
     all_sprites.draw(screen)
