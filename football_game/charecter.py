@@ -79,5 +79,43 @@ class GoalKeeper(pygame.sprite.Sprite):
         self.rect.x = (WIDTH / 2) - (self.image.get_width() / 2)
         self.rect.y = (HEIGHT / 2) - 77
 
+        self.move_right = True
+
+    def update(self):
+        
+
+        if self.move_right:
+            self.rect.x += 3
+        else:
+            self.rect.x -= 3
+
+        if self.rect.x > 750:
+            self.move_right = False
+        elif self.rect.x < 320:
+            self.move_right = True
+
+        print('self.rect.x: ', self.rect.x)
+
+        
+
+
+
+
+
 
      
+class ScoreLabel:
+
+    def __init__(self, screen, text, fontSize):
+        pygame.init()
+        self.screen = screen
+        self.text = text
+        self.font = pygame.font.Font(None, fontSize)
+
+    def draw_text(self, x, y, color=(255, 255, 255)):
+        text_surface = self.font.render(self.text, True, color)
+        self.screen.blit(text_surface, (x, y))
+
+
+
+

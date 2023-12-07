@@ -73,6 +73,11 @@ while running:
 
     all_sprites.draw(screen)
 
+    # draw score text on screen
+    score = ScoreLabel(screen, 'SCORE: ', 36)
+    score.draw_text(WIDTH - 165, 20)
+
+
     pygame.display.flip()
 
 pygame.quit()
