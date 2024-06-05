@@ -10,12 +10,70 @@ PATH = os.path.dirname(full_path)
 IMG_PATH = os.path.join(PATH, "img")
 
 
+
+class GoalPostRight(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.goal_post_img_path = os.path.join(IMG_PATH, 'goal_post', 'right.png')
+        self.image = pygame.image.load(self.goal_post_img_path).convert_alpha()
+
+        self.image.set_alpha(0)
+
+        self.original_image = self.image.copy()
+
+        # scale GoalPostMiddle
+
+        # Example: Dynamic scaling based on movement or conditions
+        # Here, you can adjust the scale_factor based on your game logic
+        self.scale_factor = 2  # Set the scale factor as per your requirement
+
+        # Calculate the scaled dimensions
+        scaled_height = int(self.image.get_height() * self.scale_factor)
+        scaled_width = int(self.image.get_width() * self.scale_factor)
+
+        # Scale the image
+        self.image = pygame.transform.scale(self.original_image, (scaled_width, scaled_height))
+        
+
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (890, 240)  # Set the position of the goal post
+
+
+class GoalPostLeft(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.goal_post_img_path = os.path.join(IMG_PATH, 'goal_post', 'left.png')
+        self.image = pygame.image.load(self.goal_post_img_path).convert_alpha()
+
+        self.image.set_alpha(0)
+
+        self.original_image = self.image.copy()
+
+        # scale GoalPostMiddle
+
+        # Example: Dynamic scaling based on movement or conditions
+        # Here, you can adjust the scale_factor based on your game logic
+        self.scale_factor = 2  # Set the scale factor as per your requirement
+
+        # Calculate the scaled dimensions
+        scaled_height = int(self.image.get_height() * self.scale_factor)
+        scaled_width = int(self.image.get_width() * self.scale_factor)
+
+        # Scale the image
+        self.image = pygame.transform.scale(self.original_image, (scaled_width, scaled_height))
+        
+
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (395, 240)  # Set the position of the goal post
+
 class GoalPostMiddle(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.goal_post_img_path = os.path.join(IMG_PATH, 'goal_post', 'middle.png')
         self.image = pygame.image.load(self.goal_post_img_path).convert_alpha()
-        self.image.fill((255, 0, 0))
+
+        self.image.set_alpha(0) # make the image transparent
+
         self.original_image = self.image.copy()
 
         # scale GoalPostMiddle
@@ -57,6 +115,12 @@ class Football(pygame.sprite.Sprite):
         # import football goal post image
 
         self.goal_post_middle = GoalPostMiddle()
+        self.goal_post_left = GoalPostLeft()
+        self.goal_post_right = GoalPostRight()
+
+        self.score_text = 0
+
+        self.goal_keeper = GoalKeeper()
 
     def update(self):
 
@@ -117,13 +181,40 @@ class Football(pygame.sprite.Sprite):
             self.rect.x -= self.motion_x
 
 
+            self.collide_keeper = self.rect.collidepoint(self.goal_keeper.rect.center)
+            
+            print('goal_keeper:', self.collide_keeper)
 
             if self.rect.colliderect(self.goal_post_middle.rect):
-                print('goal post rect: ', self.rect.colliderect(self.goal_post_middle.rect))
-                print('colliderect is runing...')
+                print('self --> goal post middle', self.rect.colliderect(self.goal_post_middle.rect))
+                self.motion_x = 0  # Stop horizontal movement
+                self.motion_y = 0  # Stop vertical movement
+
+
+                self.isMoving = False
+                self.score_text += 1
+
+            elif self.rect.colliderect(self.goal_post_left.rect):
                 self.motion_x = 0  # Stop horizontal movement
                 self.motion_y = 0  # Stop vertical movement
                 self.isMoving = False
+            elif self.rect.colliderect(self.goal_post_right.rect):
+                self.motion_x = 0  # Stop horizontal movement
+                self.motion_y = 0  # Stop vertical movement
+                self.isMoving = False
+                
+            elif self.collide_keeper:
+
+                print('self.goal_keeper: ', self.goal_keeper.motion_x)
+                self.goal_keeper.motion_x = 0
+                print('self.goal_keeper: ', self.goal_keeper.motion_x)
+      
+   
+                              
+                self.motion_x = 0  # Stop horizontal movement
+                self.motion_y = 0  # Stop vertical movement
+                self.isMoving = False
+
 
             # Decrease size based on vertical position
             self.scale_factor = max(0.5, (self.rect.y / HEIGHT))  # Adjust scaling range as needed
@@ -147,6 +238,8 @@ class GoalKeeper(pygame.sprite.Sprite):
         goalKeeper_img_path = os.path.join(IMG_PATH, 'goalKeeper.png')
         self.image = pygame.image.load(goalKeeper_img_path).convert_alpha()
 
+
+
         # decrease the image size of goal keeper
         self.scale_factor = 0.18
         self.new_width = int(self.image.get_width()*self.scale_factor)
@@ -163,15 +256,17 @@ class GoalKeeper(pygame.sprite.Sprite):
 
         self.move_right = True
 
+        self.motion_x = 3
+
     def update(self):
         
 
         if self.move_right:
-            self.rect.x += 3
+            self.rect.x += self.motion_x
         else:
-            self.rect.x -= 3
+            self.rect.x -= self.motion_x
 
-        if self.rect.x > 750:
+        if self.rect.x > 790:
             self.move_right = False
         elif self.rect.x < 320:
             self.move_right = True
