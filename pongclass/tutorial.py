@@ -1,6 +1,8 @@
 import pygame, sys
 import random
 
+
+pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.init()
 
 clock = pygame.time.Clock()
@@ -12,14 +14,22 @@ ball_speed_y = 5 * random.choice((1, -1))
 player_speed = 0
 computer_speed = 5
 
-
+# score system
 player_score = 0
 computer_score = 0
+
+
+# sound effect
+
+plop_sound = pygame.mixer.Sound('ping_pong_8bit_plop.ogg')
+peep_sound = pygame.mixer.Sound('ping_pong_8bit_peep.ogg')
+beep_sound = pygame.mixer.Sound('ping_pong_8bit_beeep.ogg')
 
 game_font = pygame.font.Font('AnonymousPro-Regular.ttf', 30)
 
 # ball animation if the ball is collide with the border of screen then it reflex
 def ball_anim():
+    global computer_score, player_score
     global ball_speed_y, ball_speed_x
 
 
@@ -27,13 +37,23 @@ def ball_anim():
     ball.y += ball_speed_y
 
     if ball.top <= 0 or ball.bottom >= screen_height:
+        # pygame.mixer.Sound.play(plop_sound)
+        pygame.mixer.Sound.play(random.choice((plop_sound, peep_sound)))
         ball_speed_y *= -1
 
-    if ball.left <=0 or ball.right >= screen_width:
+    # player score
+    if ball.left <=0:
+        player_score += 1
+        pygame.mixer.Sound.play(beep_sound)
+        ball_restart()
+        
+    if ball.right >= screen_width:
         # ball_speed_x *= -1
+        computer_score += 1
         ball_restart()
 
     if ball.colliderect(player) or ball.colliderect(computer):
+        pygame.mixer.Sound.play(plop_sound)
         ball_speed_x *= -1
 
 
