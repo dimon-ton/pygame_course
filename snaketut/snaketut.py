@@ -1,9 +1,13 @@
 import pygame
 import sys, random
+import time
 
 pygame.init()
+pygame.mixer.pre_init(44800, -16, 2, 512)
 
 clock = pygame.time.Clock()
+
+powerup_sound = pygame.mixer.Sound("powerup.ogg")
 
 # screen and display
 screen_width = 720
@@ -11,6 +15,11 @@ screen_height = 720
 
 screen = pygame.display.set_mode((screen_width, screen_height), 0, 32)
 pygame.display.set_caption("Snake Game")
+
+
+# game font
+# gamefont = pygame.font.Font("monospace", 16)
+gamefont = pygame.font.SysFont("monospace", 48)
 
 tile_size = 40
 tile_width = screen_width/tile_size
@@ -42,6 +51,7 @@ class Snake():
         self.positions = [((screen_width/2),(screen_height/2))]
         self.color = (0,0,0)
         self.direction = random.choice([up, down, left, right])
+        self.score = 0
 
     def draw(self, surface):
         for i in self.positions:
@@ -96,6 +106,17 @@ class Snake():
                 if event.key == pygame.K_RIGHT:
                     self.turn(right)
 
+
+
+    def reset(self):
+        time.sleep(1)
+        self.length = 1
+        self.positions = [((screen_width/2),(screen_height/2))]
+        self.direction = random.choice([up, down, left, right])
+        self.score = 0
+        food.random_position()
+
+
 class Food():
     def __init__(self):
         self.position = (0,0)
@@ -110,19 +131,57 @@ class Food():
         rect = pygame.Rect((self.position[0], self.position[1]), (tile_size, tile_size))
         pygame.draw.rect(surface, self.color, rect)
 
+
+class Brick():
+    bricklist = []
+    def __init__(self):
+        self.position = (0,0)
+        self.color = (255, 255, 0)
+        self.random_position()
+
+    def random_position(self):
+        self.position = (random.randint(0, int(tile_width - 1)) * tile_size, random.randint(0, int(tile_height - 1)) * tile_size)
+        self.bricklist.append(self.position)
+
+    def draw(self, surface):
+        for i in self.bricklist:
+            rect = pygame.Rect((i[0], i[1]), (tile_size, tile_size))
+            pygame.draw.rect(surface, self.color, rect)
+
+
+        # rect = pygame.Rect((self.position[0], self.position[1]), (tile_size, tile_size))
+        # pygame.draw.rect(surface, self.color, rect)
+
 snake = Snake()
 food = Food()
-
+brick = Brick()
 while(True):
     draw_grid(screen)
     snake.draw(screen)
     snake.move()
     snake.input_key()
     if snake.get_head_positions() == food.position:
+        pygame.mixer.Sound.play(powerup_sound)
         snake.length += 1
-        # snake.score += 1
+        snake.score += 1
+        food.random_position()
+        brick.random_position()
+
+
+    if any(snake.get_head_positions() == i for i in brick.bricklist):
+        snake.reset()
+
+        food.random_position()
+        brick.bricklist = []
+        brick.random_position()
+    # if snake.get_head_positions() == brick.position:
+    #     snake.reset()
+
+    score_text = gamefont.render("Score {}".format(snake.score), 1, (0,0,0))
+    screen.blit(score_text, (10, 15))
 
     food.draw(screen)
+    brick.draw(screen)
     pygame.display.update()
 
     clock.tick(10) # can affect difficulty
