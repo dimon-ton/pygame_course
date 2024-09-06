@@ -152,36 +152,86 @@ class Brick():
         # rect = pygame.Rect((self.position[0], self.position[1]), (tile_size, tile_size))
         # pygame.draw.rect(surface, self.color, rect)
 
+
+class Button:
+    def __init__(self, text, width, height, pos):
+        self.top_rect = pygame.Rect(pos,(width, height))
+        self.top_rect_color = '#475F77'
+
+        # text inside button
+        self.text_surf = gamefont.render(text, True, '#FFFFFF')
+        self.text_rect = self.text_surf.get_rect(center=self.top_rect.center)
+
+    def draw(self):
+        pygame.draw.rect(screen, self.top_rect_color, self.top_rect)
+        screen.blit(self.text_surf, self.text_rect)
+
+
+class GameState():
+    def __init__(self):
+        # self.state = 'Menu'
+        self.state = 'Menu'
+    
+    def main_game(self):
+        pygame.display.update()
+        draw_grid(screen)
+        snake.draw(screen)
+        food.draw(screen)
+        brick.draw(screen)
+        snake.move()
+        snake.input_key()
+        if snake.get_head_positions() == food.position:
+            pygame.mixer.Sound.play(powerup_sound)
+            snake.length += 1
+            snake.score += 1
+            food.random_position()
+            brick.random_position()
+
+        if any(snake.get_head_positions() == i for i in brick.bricklist):
+            snake.reset()
+
+            food.random_position()
+            brick.bricklist = []
+            brick.random_position()
+        score_text = gamefont.render("Score {}".format(snake.score), 1, (0,0,0))
+        screen.blit(score_text, (10, 15))
+
+
+    def menu(self):
+         # GUI
+         pygame.display.update()
+         button1.draw()
+         pygame.display.set_caption("Snake Game Menu")
+         screen.blit(screen, (0,0)) # Background
+         
+    
+    def state_manager(self):
+        if self.state == 'Main_Game':
+            self.main_game()
+
+        if self.state == 'Menu':
+            self.menu()
+
+    def run(self):
+        self.main_game()
+
+
 snake = Snake()
 food = Food()
 brick = Brick()
-while(True):
-    draw_grid(screen)
-    snake.draw(screen)
-    snake.move()
-    snake.input_key()
-    if snake.get_head_positions() == food.position:
-        pygame.mixer.Sound.play(powerup_sound)
-        snake.length += 1
-        snake.score += 1
-        food.random_position()
-        brick.random_position()
+game = GameState()
+
+# GUI button instance
+button1 = Button('Play Game', 300, 60, (screen_width/2 - 150, screen_height/2 + 100))
+
+while True:
+  
+    game.state_manager()
 
 
-    if any(snake.get_head_positions() == i for i in brick.bricklist):
-        snake.reset()
-
-        food.random_position()
-        brick.bricklist = []
-        brick.random_position()
     # if snake.get_head_positions() == brick.position:
     #     snake.reset()
 
-    score_text = gamefont.render("Score {}".format(snake.score), 1, (0,0,0))
-    screen.blit(score_text, (10, 15))
 
-    food.draw(screen)
-    brick.draw(screen)
-    pygame.display.update()
 
     clock.tick(10) # can affect difficulty
