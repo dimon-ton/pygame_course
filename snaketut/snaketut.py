@@ -139,6 +139,7 @@ class Brick():
         self.color = (255, 255, 0)
         self.random_position()
 
+
     def random_position(self):
         self.position = (random.randint(0, int(tile_width - 1)) * tile_size, random.randint(0, int(tile_height - 1)) * tile_size)
         self.bricklist.append(self.position)
@@ -153,8 +154,14 @@ class Brick():
         # pygame.draw.rect(surface, self.color, rect)
 
 
+
+
+
 class Button:
     def __init__(self, text, width, height, pos):
+
+        self.pressed = False
+
         self.top_rect = pygame.Rect(pos,(width, height))
         self.top_rect_color = '#475F77'
 
@@ -165,6 +172,26 @@ class Button:
     def draw(self):
         pygame.draw.rect(screen, self.top_rect_color, self.top_rect)
         screen.blit(self.text_surf, self.text_rect)
+        self.check_mouseclick()
+
+
+    def check_mouseclick(self):
+        mouse_pos = pygame.mouse.get_pos()
+
+        if self.top_rect.collidepoint(mouse_pos):
+            self.top_rect_color = '#34eb43'
+            if pygame.mouse.get_pressed()[0]:
+                self.pressed = True
+                self.operate()
+            else:
+                if self.pressed:
+                    self.pressed = False
+        else:
+            self.top_rect_color = '#205e25'
+
+
+    def operate(self):
+        pass
 
 
 class GameState():
@@ -203,6 +230,11 @@ class GameState():
          button1.draw()
          pygame.display.set_caption("Snake Game Menu")
          screen.blit(screen, (0,0)) # Background
+
+         for event in pygame.event.get():
+             if event.type == pygame.QUIT:
+                 pygame.quit()
+                 sys.exit()
          
     
     def state_manager(self):
