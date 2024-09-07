@@ -201,6 +201,7 @@ class GameState():
     
     def main_game(self):
         pygame.display.update()
+
         draw_grid(screen)
         snake.draw(screen)
         food.draw(screen)
@@ -225,17 +226,83 @@ class GameState():
 
 
     def menu(self):
-         # GUI
-         pygame.display.update()
-         button1.draw()
-         pygame.display.set_caption("Snake Game Menu")
-         screen.blit(screen, (0,0)) # Background
+        # GUI
+        pygame.display.update()
+        button1.draw()
+        button2.draw()
+        button3.draw()
+        pygame.display.set_caption("Snake Game Menu")
+        screen.blit(screen, (0,0)) # Background
 
-         for event in pygame.event.get():
-             if event.type == pygame.QUIT:
-                 pygame.quit()
-                 sys.exit()
-         
+        self.click = False
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+        
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    self.click = True
+
+                    if button1.top_rect.collidepoint((pygame.mouse.get_pos())):
+                        if self.click:
+                            self.state = 'Main_Game'
+
+
+                    if button2.top_rect.collidepoint((pygame.mouse.get_pos())):
+                        if self.click:
+                            self.state = 'Options'
+
+
+                    if button3.top_rect.collidepoint((pygame.mouse.get_pos())):
+                        if self.click:
+                            pygame.quit()
+                            sys.exit()
+
+    def options(self):
+        global tile_size, screen_width, screen_height, tile_width, tile_height, screen
+
+        option_surface = pygame.Surface((screen_width, screen_height))
+        pygame.display.update()
+        pygame.display.set_caption("Snake Game Options")
+        screen.blit(option_surface, (0,0))
+        option1.draw()
+        option2.draw()
+
+        self.click = False
+
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    self.click = True
+
+                    if option1.top_rect.collidepoint((pygame.mouse.get_pos())):
+                        # print("option1 clicked")
+                        if self.click:
+                            tile_size = 20
+                            screen_width = 500
+                            screen_height = 500
+                            tile_width = screen_width / tile_size
+                            tile_height = screen_height / tile_size
+                            screen = pygame.display.set_mode((screen_width, screen_height), 0, 32)
+                            self.state = 'Main_Game'
+
+                    if option2.text_rect.collidepoint((pygame.mouse.get_pos())):
+                        if self.click:
+                            self.state = 'Main_Game'
+
+                    if  button3.top_rect.collidepoint((pygame.mouse.get_pos())):
+                        if self.click:
+                            pygame.quit()
+                            sys.exit()
+
     
     def state_manager(self):
         if self.state == 'Main_Game':
@@ -243,6 +310,9 @@ class GameState():
 
         if self.state == 'Menu':
             self.menu()
+
+        if self.state == 'Options':
+            self.options()
 
     def run(self):
         self.main_game()
@@ -254,7 +324,13 @@ brick = Brick()
 game = GameState()
 
 # GUI button instance
-button1 = Button('Play Game', 300, 60, (screen_width/2 - 150, screen_height/2 + 100))
+button1 = Button('Play Game', 300, 60, (screen_width/2 - 150, screen_height/2))
+button2 = Button('Options', 300, 60, (screen_width/2 - 150, screen_height/2 + 100))
+button3 = Button('Quit Game', 300, 60, (screen_width/2 - 150, screen_height/2 + 200))
+
+# GUI button menu
+option1 = Button('500x500', 300, 60, (screen_width/2 - 150, screen_height/2))
+option2 = Button('720x720', 300, 60, (screen_width/2 - 150, screen_height/2 + 100))
 
 while True:
   
