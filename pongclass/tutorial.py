@@ -1,6 +1,9 @@
 import pygame, sys
 import random
 
+import pygame_menu
+from pygame_menu import themes
+
 
 pygame.mixer.pre_init(44100, -16, 2, 512)
 pygame.init()
@@ -12,6 +15,7 @@ clock = pygame.time.Clock()
 ball_speed_x = 5 * random.choice((1, -1))
 ball_speed_y = 5 * random.choice((1, -1))
 player_speed = 0
+player_two_speed = 0
 computer_speed = 5
 
 # score system
@@ -26,6 +30,26 @@ peep_sound = pygame.mixer.Sound('ping_pong_8bit_peep.ogg')
 beep_sound = pygame.mixer.Sound('ping_pong_8bit_beeep.ogg')
 
 game_font = pygame.font.Font('AnonymousPro-Regular.ttf', 30)
+
+# setting up the main window
+screen_width = 1280
+screen_height = 960
+screen = pygame.display.set_mode((screen_width, screen_height))
+screen = pygame.display.set_mode((screen_width, screen_height))
+pygame.display.set_caption("Pong Game")
+
+
+# color
+white = 'ghostwhite'
+red = 'firebrick1'
+# bg_color = pygame.Color('gray32')
+bg_color = 'gray32'
+
+# Game rectangles
+player = pygame.Rect(screen_width - 30, screen_height / 2 - 70, 10, 140)
+computer = pygame.Rect(30, screen_width / 2 - 70, 10, 140)
+ball = pygame.Rect(screen_width / 2 - 12.5, screen_height / 2 - 12.5, 25, 25)
+
 
 # ball animation if the ball is collide with the border of screen then it reflex
 def ball_anim():
@@ -66,6 +90,14 @@ def player_anim():
         player.bottom = screen_height
 
 
+def player_two_anim():
+    computer.y += player_two_speed
+
+    if computer.top <= 0:
+        computer.top = 0
+    if computer.bottom >= screen_height:
+        computer.bottom = screen_height
+
 def computer_logic():
     if computer.top < ball.y:
         computer.y += computer_speed
@@ -85,45 +117,7 @@ def ball_restart():
     ball_speed_y *= random.choice((1, -1))
     ball_speed_x *= random.choice((1, -1))
 
-# screen surface setup
-screen_width = 1280
-screen_height = 960
-screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Pong Game")
-
-# color
-white = 'ghostwhite'
-red = 'firebrick1'
-# bg_color = pygame.Color('gray32')
-bg_color = 'gray32'
-
-# Game rectangles
-player = pygame.Rect(screen_width - 30, screen_height / 2 - 70, 10, 140)
-computer = pygame.Rect(30, screen_width / 2 - 70, 10, 140)
-ball = pygame.Rect(screen_width / 2 - 12.5, screen_height / 2 - 12.5, 25, 25)
-
-while True:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
-                player_speed -= 5
-            if  event.key == pygame.K_DOWN:
-                player_speed += 5
-        if event.type == pygame.KEYUP:
-            if event.key == pygame.K_UP:
-                player_speed += 5
-            if event.key == pygame.K_DOWN:
-                player_speed -=5
-            
-
-
-    # game play loop
-    ball_anim()
-    player_anim()
-    computer_logic()
+def drawgame_layout():
 
 
     screen.fill(bg_color)
@@ -140,5 +134,116 @@ while True:
     computer_text = game_font.render(f'{computer_score}', True, white)
     screen.blit(computer_text, ((600, 485)))
 
-    pygame.display.update()
-    clock.tick(60)
+
+class Game:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((screen_width, screen_height))
+        pygame.display.set_caption("Pong Game")  
+        game_icon = pygame.image.load('pong_icon.png')
+        pygame.display.set_icon(game_icon)
+    
+    def single_player(self):
+        global player_speed, player_text, computer_text
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        sys.exit()
+                    if event.key == pygame.K_UP:
+                        player_speed -= 5
+                    if  event.key == pygame.K_DOWN:
+                        player_speed += 5
+
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_UP:
+                        player_speed += 5
+                    if event.key == pygame.K_DOWN:
+                        player_speed -=5
+
+            # game play loop
+            ball_anim()
+            player_anim()
+            drawgame_layout()
+            computer_logic()
+
+            # update the windows
+            pygame.display.update()
+            clock.tick(60)
+
+    def two_player(self):
+        global player_speed, player_text, computer_text, player_two_speed
+
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        sys.exit()
+                    if event.key == pygame.K_UP:
+                        player_speed -= 5
+                    if  event.key == pygame.K_DOWN:
+                        player_speed += 5
+
+                    if event.key == pygame.K_w:
+                        player_two_speed -= 5
+                    if  event.key == pygame.K_s:
+                        player_two_speed += 5
+
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_UP:
+                        player_speed += 5
+                    if event.key == pygame.K_DOWN:
+                        player_speed -=5
+
+                    if event.key == pygame.K_w:
+                        player_two_speed += 5
+                    if event.key == pygame.K_s:
+                        player_two_speed -=5
+
+            # game play loop
+            ball_anim()
+            player_anim()
+            player_two_anim()
+            drawgame_layout()
+ 
+
+            # update the windows
+            pygame.display.update()
+            clock.tick(60)
+
+
+
+
+
+game = Game()
+
+
+
+
+
+menu = pygame_menu.Menu('Welcome to Pong Game', screen.get_width(), screen.get_height(), theme=themes.THEME_BLUE)
+menu.add.button('Single Player', game.single_player)
+menu.add.button('Two player', game.two_player)
+
+menu.mainloop(screen)
+
+
+            
+
+
+
+
+
+
+
+
